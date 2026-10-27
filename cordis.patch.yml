@@ -1,0 +1,5 @@
+# dsh-event-gate profile patch layer — insert one loader entry for the
+# plugin package, same shape as dsh-notify-me's patch file.
+- insert:
+    - id: event-gate
+      name: 'dsh-event-gate'

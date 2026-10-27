@@ -1,0 +1,20 @@
+[
+  {
+    "id": "watch-downloads-pdf",
+    "source": "fs",
+    "enabled": false,
+    "watch": "C:/Users/86188/Downloads",
+    "filter": "**/*.pdf",
+    "debounceMs": 3000,
+    "targetSessionId": "把这里换成你要唤醒的会话 id",
+    "promptTemplate": "下载目录出现新文件（{{count}} 个）：\n{{paths}}\n\n请逐个检查这些文件，各给一句话摘要。"
+  },
+  {
+    "id": "ci-alarm",
+    "source": "webhook",
+    "enabled": false,
+    "token": "请换成一串至少 8 字符的随机口令",
+    "targetSessionId": "把这里换成会话 id",
+    "promptTemplate": "外部系统发来消息，payload：\n{{payload}}\n\n请分析并给出处理建议。"
+  }
+]
