@@ -1,0 +1,59 @@
+{
+  "name": "dsh-event-gate",
+  "version": "0.3.0",
+  "description": "事件驱动触发器（门铃）：文件变化 / 本地 webhook 命中规则后唤醒 DSH 会话并注入渲染后的 prompt。补上 dsh-proactive（闹钟）之外的另一半。",
+  "license": "MIT",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": "./lib/index.js",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "deepseek-harness",
+    "dsh",
+    "dsh-plugin",
+    "trigger",
+    "watcher",
+    "webhook",
+    "event",
+    "automation",
+    "proactive",
+    "唤醒",
+    "触发器",
+    "文件监视",
+    "自动化"
+  ],
+  "engines": {
+    "dsh": ">=0.2.1-rc.2",
+    "node": ">=22.5"
+  },
+  "author": {
+    "name": "Willmylife",
+    "url": "https://github.com/Willmylife"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Willmylife/dsh-event-gate.git"
+  },
+  "homepage": "https://github.com/Willmylife/dsh-event-gate#readme",
+  "bugs": {
+    "url": "https://github.com/Willmylife/dsh-event-gate/issues"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-agent": ">=0.2.1-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-llm": ">=0.2.1-rc.2 <0.3.0-0",
+    "@deepseek-ai/dsh-tools": ">=0.2.1-rc.2 <0.3.0-0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
