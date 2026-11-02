@@ -12,7 +12,7 @@
 
 机制一句话：规则文件里写清"听什么动静、叫醒谁、醒了干什么"，插件负责在事件命中的那一刻把"发生了什么"作为消息注入那个会话——会话开着直接投递，关着先恢复再投递；每次触发都有审计记录，`trigger_history` 随时可查。
 
-## 已实现（当前源码）
+## 已实现（v0.4.0）
 
 - **fs 事件源**：递归监视目录，按规则防抖合并（`{{paths}}` 带合并后的文件列表），glob 过滤；`maxWaitMs` 防止持续写入无限推迟
 - **webhook 事件源**：`POST /__dsh-event-gate/hook`，按规则 token 鉴权，回环限定；token 仅通过请求头或 JSON body 传递
@@ -24,7 +24,7 @@
 ## 安装
 
 - **插件市场**（收录后）：DSH 设置 → 插件 → 添加插件，搜索 `dsh-event-gate`
-- **命令行**：`dsh plugin --profile web add github:Willmylife/dsh-event-gate#v0.3.0`（桌面端请用应用内"添加插件"）
+- **命令行**：`dsh plugin --profile web add github:Willmylife/dsh-event-gate#v0.4.0`（桌面端请用应用内"添加插件"）
 - **本地开发**：见下方 link 方式
 
 ## 配置
