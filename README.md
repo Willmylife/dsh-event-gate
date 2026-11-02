@@ -12,13 +12,14 @@
 
 机制一句话：规则文件里写清"听什么动静、叫醒谁、醒了干什么"，插件负责在事件命中的那一刻把"发生了什么"作为消息注入那个会话——会话开着直接投递，关着先恢复再投递；每次触发都有审计记录，`trigger_history` 随时可查。
 
-## 已实现（v0.3.0）
+## 已实现（当前源码）
 
-- **fs 事件源**：递归监视目录，按规则防抖合并（`{{paths}}` 带合并后的文件列表），glob 过滤
-- **webhook 事件源**：`POST /__dsh-event-gate/hook`，按规则 token 鉴权，回环限定
+- **fs 事件源**：递归监视目录，按规则防抖合并（`{{paths}}` 带合并后的文件列表），glob 过滤；`maxWaitMs` 防止持续写入无限推迟
+- **webhook 事件源**：`POST /__dsh-event-gate/hook`，按规则 token 鉴权，回环限定；token 仅通过请求头或 JSON body 传递
 - **唤醒**：活会话直接投递；冷会话 `agents.resume` 恢复后投递（恢复模型选择与预设，尽力而为）
-- **规则热更新**：编辑 `rules.json` 保存即生效，无需重启 DSH
-- **可观测性**：`trigger_list` / `trigger_history` 工具 + `/health` 路由 + JSONL 触发历史（每次触发都有记录，失败原因可查）
+- **可靠调度**：同一目标会话串行恢复和投递；fs 等待期间按规则合并，webhook 使用有界 FIFO；busy 自动退避重试
+- **规则热更新**：编辑 `rules.json` 保存即生效，无需重启 DSH；同 ID 的 fs 配置变化也会重建 watcher
+- **可观测性**：`trigger_list`（token 已脱敏）/ `trigger_history` 工具 + `/health` 路由 + 串行写入、原子裁剪的 JSONL 触发历史
 
 ## 安装
 
@@ -38,7 +39,8 @@
     "enabled": true,
     "watch": "C:/Users/86188/Downloads", // fs：要监视的目录
     "filter": "**/*.pdf",              // fs：可选 glob 过滤
-    "debounceMs": 3000,                // fs：防抖窗口
+    "debounceMs": 3000,                // fs：静默防抖窗口
+    "maxWaitMs": 30000,                // fs：持续事件下最长等待时间
     "targetSessionId": "<会话 id>",     // 要唤醒的会话
     "promptTemplate": "新文件：{{paths}}\n请检查。"
   },
@@ -53,7 +55,12 @@
 ]
 ```
 
-**模板变量**：`{{ruleId}}`、`{{source}}`；fs 规则另有 `{{count}}`、`{{paths}}`；webhook 规则有 `{{payload}}`（JSON，token 已剥离）。
+**模板变量**：`{{ruleId}}`、`{{source}}`。
+
+- fs：`{{count}}`（累计事件数）、`{{paths}}`（最多显示 50 条）、`{{pathsOmitted}}`、`{{pathsTruncated}}`。
+- webhook：`{{payload}}`（JSON，token 已剥离）、`{{payloadTruncated}}`、`{{payloadOriginalLength}}`。超长 payload 会变为包含 `truncated`、`originalLength` 和 `preview` 的有效 JSON，而不是直接截断成半个 JSON 字符串。
+
+**队列语义**：同一目标会话的等待队列最多容纳 100 个任务。fs 等待任务会按规则合并；webhook 每条事件单独排队。队列满返回 HTTP 429，宿主不可用返回 503；HTTP 202 表示已进入**内存队列**，不代表模型已经处理完成。DSH 重启会清空等待队列。
 
 **webhook 调用**（本机）：
 
@@ -83,9 +90,18 @@ pnpm add link:"<本仓库绝对路径>"
   `agents.resume({resumeSessionId, agentOptions, setup})` → `{agent, dispose()}`，句柄用完必 dispose。
 - prompt 注入：`createUserMessage` 构造 `source={kind:"plugin:dsh-event-gate", form:"notice", summary}`
   的 user 消息（v4 会话格式**拒绝**旧的 `{kind:"plugin", plugin}` 包装），
-  再 `agent.runMaintenance(() => agent.followup(msg))` 投递（忙时 throw → 退避重试），`await agent.whenIdle()`。
+  再 `agent.runMaintenance(() => agent.followup(msg))` 投递，`await agent.whenIdle()`。
 - 唤醒前需恢复该会话的模型选择与预设（`installModelSelection` + `agentPresets.mount`），否则工具全部 unknown。
-- 护栏照抄：触发前持久化 in-flight 防崩溃双发；busy 30s 退避封顶；预算按"有可见回复"计费。
+- 同一目标会话只有一个投递管线；busy 最多尝试 3 次，重试间隔 5s、10s（指数退避，30s 封顶）。
+- 当前队列是进程内存结构，不承诺崩溃恢复或跨重启持久化；每次入队、合并、重试、失败和完成均写审计历史。
+
+## 测试
+
+```bash
+npm test
+```
+
+测试使用 Node 内置 `node:test`，无额外依赖，覆盖 token 脱敏、规则热更新、同会话串行恢复、事件合并与背压、busy 重试、历史并发裁剪、glob、IPv6 Host 和 HTTP 请求体边界。
 
 ## License
 

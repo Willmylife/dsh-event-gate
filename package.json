@@ -4,6 +4,9 @@
   "description": "事件驱动触发器（门铃）：文件变化 / 本地 webhook 命中规则后唤醒 DSH 会话并注入渲染后的 prompt。补上 dsh-proactive（闹钟）之外的另一半。",
   "license": "MIT",
   "type": "module",
+  "scripts": {
+    "test": "node test/run.js"
+  },
   "main": "lib/index.js",
   "exports": {
     ".": "./lib/index.js",

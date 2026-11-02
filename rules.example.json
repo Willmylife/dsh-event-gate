@@ -6,6 +6,7 @@
     "watch": "C:/Users/86188/Downloads",
     "filter": "**/*.pdf",
     "debounceMs": 3000,
+    "maxWaitMs": 30000,
     "targetSessionId": "把这里换成你要唤醒的会话 id",
     "promptTemplate": "下载目录出现新文件（{{count}} 个）：\n{{paths}}\n\n请逐个检查这些文件，各给一句话摘要。"
   },
